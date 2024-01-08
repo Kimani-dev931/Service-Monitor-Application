@@ -1,0 +1,34 @@
+[
+    {
+        "id": 1,
+        "serviceName": "Harambee Members Portal",
+        "serviceHost": "selfservice.harambeesacco.com",
+        "servicePort": 443,
+        "serviceResourceURI": "/",
+        "serviceMethod": "GET",
+        "expectedTelnetResponse": "Connected to selfservice.harambeesacco.com.",
+        "expectedRequestResponse": "Welcome to Harambee Sacco Society Ltd Members' Portal",
+        "monitoringInterval": 10,
+        "monitoringIntervalTimeUnit": "Minutes",
+        "enableFileLogging": "Yes",
+        "fileLoggingInterval": "Hourly",
+        "enableLogsArchiving": "Yes",
+        "logArchivingIntervals": "Weekly"
+    },
+    {
+        "id": 2,
+        "serviceName": "Sky World Services Portal",
+        "serviceHost": "portal.skyworld.co.ke",
+        "servicePort": 443,
+        "serviceResourceURI": "/",
+        "serviceMethod": "GET",
+        "expectedTelnetResponse": "Connected to portal.skyworld.co.ke.",
+        "expectedRequestResponse": "Welcome to Sky World Limited Services Hub",
+        "monitoringInterval": 300,
+        "monitoringIntervalTimeUnit": "Seconds",
+        "enableFileLogging": "No",
+        "fileLoggingInterval": "Daily",
+        "enableLogsArchiving": "No",
+        "logArchivingIntervals": "Weekly"
+    }
+]
