@@ -1,0 +1,2 @@
+## Service monitor application
+The service monitor application monitors whether the server to a certain service is UP.If it finds the server is UP it then goes ahead to monitor whether the service it self is UP or DOWN.If the application finds the server is DOWN this automatically means the service is DOWN.The application outputs a message to say whether the server to certain service is UP and whether the service is UP.The message has a time stamp.
