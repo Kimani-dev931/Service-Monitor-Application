@@ -10,7 +10,11 @@
         <expectedRequestResponse>Welcome to Harambee Sacco Society Ltd Members' Portal</expectedRequestResponse>
         <monitoringInterval>10</monitoringInterval>
         <monitoringIntervalTimeUnit>Minutes</monitoringIntervalTimeUnit>
-    <enableFileLogging>Yes</enableFileLogging><fileLoggingInterval>Hourly</fileLoggingInterval><enableLogsArchiving>Yes</enableLogsArchiving><logArchivingIntervals>Weekly</logArchivingIntervals></service>
+        <enableFileLogging>Yes</enableFileLogging>
+        <fileLoggingInterval>Hourly</fileLoggingInterval>
+        <enableLogsArchiving>Yes</enableLogsArchiving>
+        <logArchivingIntervals>Weekly</logArchivingIntervals>
+    </service>
     <service>
         <id>2</id>
         <serviceName>Sky World Services Portal</serviceName>
@@ -22,5 +26,9 @@
         <expectedRequestResponse>Welcome to Sky World Limited Services Hub</expectedRequestResponse>
         <monitoringInterval>300</monitoringInterval>
         <monitoringIntervalTimeUnit>Seconds</monitoringIntervalTimeUnit>
-    <enableFileLogging>No</enableFileLogging><fileLoggingInterval>Daily</fileLoggingInterval><enableLogsArchiving>No</enableLogsArchiving><logArchivingIntervals>Weekly</logArchivingIntervals></service>
+        <enableFileLogging>No</enableFileLogging>
+        <fileLoggingInterval>Daily</fileLoggingInterval>
+        <enableLogsArchiving>No</enableLogsArchiving>
+        <logArchivingIntervals>Weekly</logArchivingIntervals>
+    </service>
 </services>

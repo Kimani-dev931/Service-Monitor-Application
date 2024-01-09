@@ -40,7 +40,7 @@ public class ServiceMonitorApplication {
 
 
     public static void main(String[] args) {
-        String serviceFile = "services.xml";
+        String serviceFile = "services.json";
         List<Service> services ;
 
         if (serviceFile.endsWith(".csv")) {
@@ -389,32 +389,95 @@ public class ServiceMonitorApplication {
     }
 
     private static void scheduleLogging(Path appStatusDir, Path serverStatusDir, Service service) {
-        executor.scheduleWithFixedDelay(() -> logStatus(appStatusDir, "application", checkServiceStatus(service)),
-                0, convertToInterval(service.getFileLoggingInterval()), TimeUnit.SECONDS);
-        executor.scheduleWithFixedDelay(() -> logStatus(serverStatusDir, "server", checkServerStatus(service)),
-                0, convertToInterval(service.getFileLoggingInterval()), TimeUnit.SECONDS);
+        long fileCreationInterval = convertToInterval(service.getFileLoggingInterval());
+        long logEntryInterval = convertToIntervalInSeconds(service.getMonitoringInterval(), service.getMonitoringIntervalTimeUnit());
+
+        executor.scheduleAtFixedRate(() -> logStatus(appStatusDir, "application", checkServiceStatus(service), fileCreationInterval),
+                0, logEntryInterval, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(() -> logStatus(serverStatusDir, "server", checkServerStatus(service), fileCreationInterval),
+                0, logEntryInterval, TimeUnit.SECONDS);
     }
 
-    private static long convertToInterval(String interval) {
-        switch (interval.toLowerCase()) {
-            case "hourly":
-                return TimeUnit.HOURS.toSeconds(1);
-            case "daily":
-                return TimeUnit.DAYS.toSeconds(1);
-            default:
-                return TimeUnit.MINUTES.toSeconds(10); // Default interval
+
+
+
+    private static final Map<String, Long> lastLogFileCreationTimes = new HashMap<>();
+
+    private static final String LAST_LOG_TIME_DIR = "last_logging_time";
+
+    private static void writeLastLogTimestamp(String serviceName, String type, long timestamp) {
+        Path lastLogTimeDir = Paths.get(LAST_LOG_TIME_DIR);
+        try {
+            Files.createDirectories(lastLogTimeDir);
+            Path timestampFile = lastLogTimeDir.resolve(serviceName + "_" + type + ".timestamp");
+
+            try (BufferedWriter writer = Files.newBufferedWriter(timestampFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                writer.write(String.valueOf(timestamp));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+    private static long readLastLogTimestamp(String serviceName, String type) {
+        Path timestampFile = Paths.get(LAST_LOG_TIME_DIR, serviceName + "_" + type + ".timestamp");
+        if (Files.exists(timestampFile)) {
+            try {
+                String timestampStr = new String(Files.readAllBytes(timestampFile));
+                return Long.parseLong(timestampStr);
+            } catch (IOException | NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        return System.currentTimeMillis();
+    }
+    private static void logStatus(Path directory, String type, boolean status, long fileCreationInterval) {
+        String serviceName = directory.getParent().getFileName().toString();
+        String key = serviceName + "_" + type;
 
-    private static void logStatus(Path directory, String type, boolean status) {
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        Path logFile = directory.resolve(timestamp + "_" + type + ".log");
-        String logEntry = timestamp + " - " + type.toUpperCase() + " is " + (status ? "UP" : "DOWN");
+        long lastTimestamp = lastLogFileCreationTimes.getOrDefault(key, readLastLogTimestamp(serviceName, type));
+        long currentTime = System.currentTimeMillis();
+
+        if (currentTime - lastTimestamp >= fileCreationInterval) {
+            lastTimestamp = currentTime;
+            lastLogFileCreationTimes.put(key, lastTimestamp);
+        }
+
+        writeLastLogTimestamp(serviceName, type, lastTimestamp);
+
+        String logFileTimestamp = new SimpleDateFormat("yyyyMMdd_HHmm").format(new Date(lastTimestamp));
+        Path logFile = directory.resolve(logFileTimestamp + "_" + type + ".log");
+        String logEntry = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + " - " + type.toUpperCase() + " is " + (status ? "UP" : "DOWN");
 
         try {
             Files.write(logFile, Collections.singletonList(logEntry), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+
+
+
+
+    private static long convertToIntervalInSeconds(long interval, String timeUnit) {
+        switch (timeUnit.toLowerCase()) {
+            case "minutes":
+                return TimeUnit.MINUTES.toSeconds(interval);
+            case "seconds":
+                return interval;
+            default:
+                return TimeUnit.MINUTES.toSeconds(10);
+        }
+    }
+
+    private static long convertToInterval(String interval) {
+        switch (interval.toLowerCase()) {
+            case "hourly":
+                return TimeUnit.HOURS.toMillis(1);
+            case "daily":
+                return TimeUnit.DAYS.toMillis(1);
+            default:
+                return TimeUnit.MINUTES.toMillis(10);
         }
     }
 
@@ -473,22 +536,15 @@ public class ServiceMonitorApplication {
     }
 
     private static long calculateArchiveInterval(String interval) {
-
         if ("Weekly".equalsIgnoreCase(interval)) {
             return TimeUnit.DAYS.toMillis(7);
+        } else if ("Seconds".equalsIgnoreCase(interval)) {
+            return TimeUnit.SECONDS.toMillis(1);
         }
+
 
         return 0;
     }
-
-
-
-
-
-
-
-
-
 
 
     @JsonIgnoreProperties(ignoreUnknown = true)
